@@ -15,9 +15,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
       <body>
-        <div style={{ maxWidth: 560, margin: '0 auto', minHeight: '100vh', background: 'var(--cream)' }}>
-          {children}
-        </div>
+        {children}
       </body>
     </html>
   )
