@@ -30,50 +30,68 @@ export default function Home() {
     router.push(`/vote?s=${session.id}`)
   }
 
-  if (loading) return <Loader />
+  if (loading) return (
+    <div style={{ minHeight:'100vh', background:'var(--cream)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <span className="font-display" style={{ fontSize:13, letterSpacing:'0.1em', textTransform:'uppercase', color:'#888' }}>Chargement...</span>
+    </div>
+  )
 
   return (
-    <div>
-      {/* Topbar */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px', borderBottom:'var(--border)' }}>
+    <div style={{ minHeight:'100vh', background:'var(--cream)' }}>
+
+      {/* Topbar — full width */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 32px', borderBottom:'var(--border)' }}>
         <span style={{ fontSize:14, fontWeight:500 }}>Kreads Edit</span>
-        {session && <Pill>{session.label}</Pill>}
+        {session && (
+          <div className="font-display" style={{ fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--ink)', color:'var(--cream)', padding:'5px 12px', borderRadius:4 }}>
+            {session.label}
+          </div>
+        )}
       </div>
 
       {!session ? (
-        <div style={{ padding:'60px 20px', textAlign:'center' }}>
-          <H1>Pas de session<br />en cours</H1>
-          <p style={{ fontSize:14, color:'#666', margin:'12px 0 24px' }}>La prochaine session ouvrira bientôt.</p>
-          <button className="btn-ghost" style={{ maxWidth:280, margin:'0 auto' }} onClick={() => router.push('/ceremony')}>
+        <div style={{ maxWidth:600, margin:'0 auto', padding:'80px 32px', textAlign:'center' }}>
+          <div className="font-display" style={{ fontSize:52, fontWeight:900, textTransform:'uppercase', lineHeight:0.92, marginBottom:16 }}>
+            Pas de session<br />en cours
+          </div>
+          <p style={{ fontSize:14, color:'#666', marginBottom:28 }}>La prochaine session ouvrira bientôt.</p>
+          <button className="btn-ghost" style={{ maxWidth:320, margin:'0 auto' }} onClick={() => router.push('/ceremony')}>
             Voir la dernière cérémonie
           </button>
         </div>
       ) : (
         <>
-          {/* Hero */}
-          <div style={{ padding:'48px 24px 36px', textAlign:'center', borderBottom:'var(--border)', position:'relative', overflow:'hidden' }}>
+          {/* Hero — centré, aéré */}
+          <div style={{ padding:'64px 32px 48px', textAlign:'center', borderBottom:'var(--border)', position:'relative', overflow:'hidden' }}>
+            {/* Watermark */}
             <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'none', overflow:'hidden' }}>
-              <span className="font-display" style={{ fontSize:130, fontWeight:900, textTransform:'uppercase', color:'#0d0d0d05', lineHeight:1, whiteSpace:'nowrap', userSelect:'none' }}>EDIT</span>
+              <span className="font-display" style={{ fontSize:'22vw', fontWeight:900, textTransform:'uppercase', color:'#0d0d0d04', lineHeight:1, whiteSpace:'nowrap', userSelect:'none' }}>EDIT</span>
             </div>
-            <div style={{ display:'inline-flex', alignItems:'center', gap:6, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', background:'var(--turq)', color:'var(--ink)', padding:'5px 12px', borderRadius:4, marginBottom:20, position:'relative', zIndex:1 }}>
+
+            {/* Badge live */}
+            <div style={{ display:'inline-flex', alignItems:'center', gap:6, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', background:'var(--turq)', color:'var(--ink)', padding:'5px 14px', borderRadius:4, marginBottom:24, position:'relative', zIndex:1 }}>
               <span className="live-dot" /> Session en cours
             </div>
-            <H1 style={{ position:'relative', zIndex:1 }}>
+
+            {/* Titre */}
+            <div className="font-display" style={{ fontSize:'clamp(42px, 7vw, 88px)', fontWeight:900, textTransform:'uppercase', letterSpacing:'-0.02em', lineHeight:0.9, marginBottom:8, position:'relative', zIndex:1 }}>
               Qui a réalisé<br />le meilleur<br />
               <span style={{ color:'var(--turq)' }}>montage ?</span>
-            </H1>
-            <div style={{ width:48, height:4, background:'var(--ink)', borderRadius:2, margin:'16px auto', position:'relative', zIndex:1 }} />
-            <p style={{ fontSize:13, color:'#666', position:'relative', zIndex:1, lineHeight:1.6 }}>
+            </div>
+
+            <div style={{ width:56, height:5, background:'var(--ink)', borderRadius:3, margin:'20px auto', position:'relative', zIndex:1 }} />
+
+            <p style={{ fontSize:15, color:'#666', position:'relative', zIndex:1, lineHeight:1.5 }}>
               Vote anonyme · <strong style={{ color:'var(--ink)' }}>podium Or · Argent · Bronze</strong>
             </p>
           </div>
 
-          {/* Form */}
-          <div style={{ padding:'24px 20px' }}>
-            <label style={{ display:'block', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#666', marginBottom:8 }}>
+          {/* Formulaire — centré */}
+          <div style={{ maxWidth:520, margin:'0 auto', padding:'40px 32px' }}>
+            <label className="font-display" style={{ display:'block', fontSize:11, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#888', marginBottom:10 }}>
               Ton prénom + initiale du nom
             </label>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 80px', gap:10, marginBottom:14 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 90px', gap:10, marginBottom:16 }}>
               <input className="k-field" placeholder="Prénom" value={fn}
                 onChange={e => { setFn(e.target.value); setErr('') }}
                 onKeyDown={e => e.key === 'Enter' && submit()} />
@@ -85,7 +103,7 @@ export default function Home() {
             <button className="btn-ink" disabled={fn.trim().length < 2 || ln.trim().length < 1} onClick={submit}>
               Accéder au vote →
             </button>
-            <button className="btn-ghost" style={{ marginTop:8 }} onClick={() => router.push('/ceremony')}>
+            <button className="btn-ghost" style={{ marginTop:10 }} onClick={() => router.push('/ceremony')}>
               Voir la dernière cérémonie
             </button>
           </div>
@@ -93,24 +111,4 @@ export default function Home() {
       )}
     </div>
   )
-}
-
-function H1({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  return (
-    <div className="font-display" style={{ fontSize:46, fontWeight:900, textTransform:'uppercase', letterSpacing:'-0.01em', lineHeight:0.95, marginBottom:6, ...style }}>
-      {children}
-    </div>
-  )
-}
-
-function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="font-display" style={{ fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--ink)', color:'var(--cream)', padding:'5px 12px', borderRadius:4 }}>
-      {children}
-    </div>
-  )
-}
-
-function Loader() {
-  return <div className="font-display" style={{ padding:'40px 20px', textAlign:'center', fontSize:13, letterSpacing:'0.1em', textTransform:'uppercase', color:'#888' }}>Chargement...</div>
 }
