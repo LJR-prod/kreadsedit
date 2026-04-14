@@ -9,33 +9,36 @@ type Medal = 'gold' | 'silver' | 'bronze'
 const MEDALS: Medal[] = ['gold', 'silver', 'bronze']
 const EMOJI: Record<Medal, string> = { gold: '🥇', silver: '🥈', bronze: '🥉' }
 const PTS: Record<Medal, number> = { gold: 3, silver: 2, bronze: 1 }
-const LABEL: Record<Medal, string> = { gold: 'Or · 3 pts', silver: 'Argent · 2 pts', bronze: 'Bronze · 1 pt' }
-const SLOT_STYLE: Record<Medal, { border: string; bg: string }> = {
-  gold:   { border: '#c9a000', bg: '#fff9e6' },
-  silver: { border: '#7a8fa0', bg: '#f0f4f7' },
-  bronze: { border: '#a0622a', bg: '#fdf3e7' },
+const SLOT_STYLE: Record<Medal, { border: string; bg: string; label: string }> = {
+  gold:   { border: '#c9a000', bg: '#fffbee', label: 'Or · 3 pts' },
+  silver: { border: '#7a8fa0', bg: '#f2f5f7', label: 'Argent · 2 pts' },
+  bronze: { border: '#a0622a', bg: '#fdf5ee', label: 'Bronze · 1 pt' },
 }
 
 function VideoModal({ entry, onClose }: { entry: Entry; onClose: () => void }) {
   const id = ytId(entry.youtube_url)
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', h)
-    return () => window.removeEventListener('keydown', h)
+    return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', h) }
   }, [onClose])
   return (
-    <div className="video-modal-backdrop" onClick={onClose}>
-      <div className="video-modal-inner" onClick={e => e.stopPropagation()}>
-        <div className="video-modal-header">
-          <span className="video-modal-title">Montage #{entry.display_number}</span>
-          <button className="video-modal-close" onClick={onClose}>✕</button>
+    <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:200, background:'rgba(0,0,0,0.88)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width:'100%', maxWidth:960, background:'#111', borderRadius:16, overflow:'hidden', border:'2px solid #333' }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 20px', borderBottom:'1px solid #333' }}>
+          <span className="font-display" style={{ fontSize:15, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.06em', color:'white' }}>
+            Montage #{entry.display_number}
+          </span>
+          <button onClick={onClose} style={{ background:'none', border:'none', color:'#aaa', fontSize:22, cursor:'pointer', lineHeight:1, padding:'0 4px' }}>✕</button>
         </div>
-        <div className="video-modal-iframe-wrap">
+        <div style={{ position:'relative', paddingTop:'56.25%' }}>
           {id
-            ? <iframe src={`https://www.youtube.com/embed/${id}?autoplay=1`}
+            ? <iframe style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:'none' }}
+                src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen />
-            : <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#888' }}>URL invalide</div>
+            : <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#666' }}>URL invalide</div>
           }
         </div>
       </div>
@@ -71,9 +74,7 @@ function VoteContent() {
       supabase.from('entries').select('*').eq('session_id', sessionId).order('display_number'),
     ])
     if (!sess || sess.status !== 'open') { router.push('/'); return }
-    setSession(sess)
-    setEntries(ents || [])
-    setLoading(false)
+    setSession(sess); setEntries(ents || []); setLoading(false)
   }
 
   function clickEntry(id: string) {
@@ -91,127 +92,149 @@ function VoteContent() {
     setSubmitting(true)
     try {
       const res = await fetch('/api/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: session.id, voter_name: voter,
-          gold_entry_id: picks.gold, silver_entry_id: picks.silver, bronze_entry_id: picks.bronze,
-        }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: session.id, voter_name: voter, gold_entry_id: picks.gold, silver_entry_id: picks.silver, bronze_entry_id: picks.bronze }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error)
-      markVoted(session.id)
-      setDone(true)
-    } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Erreur')
-    } finally {
-      setSubmitting(false)
-    }
+      markVoted(session.id); setDone(true)
+    } catch (e: unknown) { alert(e instanceof Error ? e.message : 'Erreur') }
+    finally { setSubmitting(false) }
   }
 
   if (loading) return <Loader />
   if (done) return <Confirmed picks={picks} entries={entries} onBack={() => router.push('/ceremony')} />
 
   return (
-    <div style={{ minHeight:'100vh', background:'var(--cream)' }}>
+    <div style={{ minHeight:'100vh', background:'var(--cream)', display:'flex', flexDirection:'column' }}>
       {watching && <VideoModal entry={watching} onClose={() => setWatching(null)} />}
 
-      {/* Topbar full width */}
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 32px', borderBottom:'var(--border)' }}>
+      {/* ── Topbar ── */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 40px', borderBottom:'var(--border)', flexShrink:0 }}>
         <span style={{ fontSize:14, fontWeight:500 }}>Kreads Edit</span>
-        <div className="font-display" style={{ fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--ink)', color:'var(--cream)', padding:'5px 12px', borderRadius:4 }}>
+        <div className="font-display" style={{ fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--ink)', color:'var(--cream)', padding:'5px 14px', borderRadius:4 }}>
           {voter}
         </div>
       </div>
 
-      {/* Contenu centré */}
-      <div style={{ maxWidth:960, margin:'0 auto', padding:'0 32px' }}>
+      {/* ── Contenu centré ── */}
+      <div style={{ flex:1, maxWidth:1000, width:'100%', margin:'0 auto', padding:'0 40px 120px', boxSizing:'border-box' }}>
 
-        {/* Progress */}
-        <div style={{ padding:'14px 0', borderBottom:'var(--border)' }}>
-          <div style={{ display:'flex', justifyContent:'space-between', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'#888', marginBottom:6 }}>
-            <span>Mon podium</span><span>{filled} / 3</span>
+        {/* Progress bar */}
+        <div style={{ padding:'18px 0', borderBottom:'var(--border)', marginBottom:28 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
+            <span className="font-display" style={{ fontSize:11, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#888' }}>Mon podium</span>
+            <span className="font-display" style={{ fontSize:11, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', color: filled === 3 ? 'var(--turq)' : '#888' }}>{filled} / 3</span>
           </div>
-          <div style={{ height:5, background:'#0d0d0d18', borderRadius:3 }}>
-            <div style={{ height:'100%', background:'var(--turq)', borderRadius:3, width:`${(filled/3)*100}%`, transition:'width 0.3s' }} />
+          <div style={{ height:6, background:'#0d0d0d14', borderRadius:4 }}>
+            <div style={{ height:'100%', background:'var(--turq)', borderRadius:4, width:`${(filled/3)*100}%`, transition:'width 0.35s ease' }} />
           </div>
         </div>
 
-        {/* Podium slots */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, padding:'16px 0', borderBottom:'var(--border)', maxWidth:480 }}>
+        {/* ── Podium slots ── */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:36 }}>
           {MEDALS.map(medal => {
             const entryId = picks[medal]
             const entry = entryId ? entries.find(e => e.id === entryId) : null
+            const s = SLOT_STYLE[medal]
             return (
               <div key={medal} onClick={() => entry && setPicks(p => ({ ...p, [medal]: null }))}
                 style={{
-                  border: entry ? `2px solid ${SLOT_STYLE[medal].border}` : '2px dashed #0d0d0d35',
-                  background: entry ? SLOT_STYLE[medal].bg : 'transparent',
-                  borderRadius:'var(--radius)', padding:'12px 8px', textAlign:'center',
-                  minHeight:84, display:'flex', flexDirection:'column', alignItems:'center',
-                  justifyContent:'center', gap:4, cursor: entry ? 'pointer' : 'default', transition:'all 0.15s',
+                  border: entry ? `2px solid ${s.border}` : '2px dashed #0d0d0d28',
+                  background: entry ? s.bg : 'white',
+                  borderRadius:14, padding:'20px 16px', textAlign:'center',
+                  display:'flex', flexDirection:'column', alignItems:'center', gap:8,
+                  cursor: entry ? 'pointer' : 'default', transition:'all 0.2s',
+                  minHeight: 120,
                 }}>
-                <span style={{ fontSize:22 }}>{EMOJI[medal]}</span>
-                <span className="font-display" style={{ fontSize:9, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#888' }}>{LABEL[medal]}</span>
-                {entry && <span className="font-display" style={{ fontSize:13, fontWeight:900, textTransform:'uppercase' }}>#{entry.display_number}</span>}
+                <span style={{ fontSize:32 }}>{EMOJI[medal]}</span>
+                <span className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color: entry ? s.border : '#aaa' }}>
+                  {s.label}
+                </span>
+                {entry
+                  ? <>
+                      <span className="font-display" style={{ fontSize:18, fontWeight:900, textTransform:'uppercase', color:'var(--ink)' }}>
+                        #{entry.display_number}
+                      </span>
+                      <span style={{ fontSize:11, color:'#999' }}>Cliquer pour retirer</span>
+                    </>
+                  : <span style={{ fontSize:12, color:'#bbb' }}>Sélectionner une vidéo</span>
+                }
               </div>
             )
           })}
         </div>
 
-        {/* Hint */}
-        <div className="font-display" style={{ fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'#888', padding:'14px 0 10px' }}>
-          ▶ pour regarder · cliquer la carte pour voter
+        {/* ── Titre section vidéos ── */}
+        <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:20 }}>
+          <div className="font-display" style={{ fontSize:13, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase' }}>
+            Les montages du mois
+          </div>
+          <div style={{ flex:1, height:2, background:'var(--border)', borderRadius:1 }} />
+          <span className="font-display" style={{ fontSize:11, fontWeight:700, color:'#aaa', letterSpacing:'0.06em', textTransform:'uppercase' }}>
+            ▶ regarder · carte pour voter
+          </span>
         </div>
 
-        {/* Grille vidéos responsive */}
-        <div style={{
-          display:'grid',
-          gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))',
-          gap:16,
-          paddingBottom:110,
-        }}>
+        {/* ── Grille vidéos ── */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:20 }}>
           {entries.map(entry => {
             const medal = MEDALS.find(m => picks[m] === entry.id) || null
             const thumb = ytThumb(entry.youtube_url)
+            const s = medal ? SLOT_STYLE[medal] : null
             return (
               <div key={entry.id} style={{
-                background: medal ? SLOT_STYLE[medal].bg : 'white',
-                border: medal ? `2px solid ${SLOT_STYLE[medal].border}` : 'var(--border)',
-                borderRadius:'var(--radius)', overflow:'hidden', transition:'all 0.12s',
-                boxShadow: medal ? 'none' : '0 1px 3px rgba(0,0,0,0.06)',
+                background:'white', borderRadius:14, overflow:'hidden',
+                border: s ? `2px solid ${s.border}` : 'var(--border)',
+                boxShadow: s ? `0 0 0 4px ${s.border}22` : '0 2px 8px rgba(0,0,0,0.06)',
+                transition:'all 0.2s',
               }}>
-                {/* Miniature — clic pour regarder */}
-                <div onClick={() => setWatching(entry)} style={{ position:'relative', paddingTop:'56.25%', background:'#111', cursor:'pointer' }}>
-                  {thumb && <img src={thumb} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} />}
-                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.28)' }}>
-                    <div style={{ width:52, height:52, borderRadius:'50%', background:'rgba(255,255,255,0.93)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="var(--ink)"><path d="M8 5v14l11-7z"/></svg>
+                {/* Thumbnail */}
+                <div onClick={() => setWatching(entry)} style={{ position:'relative', paddingTop:'56.25%', background:'#0d0d0d', cursor:'pointer' }}>
+                  {thumb && <img src={thumb} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:0.92 }} />}
+                  {/* Overlay play */}
+                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.22)', transition:'background 0.15s' }}>
+                    <div style={{ width:56, height:56, borderRadius:'50%', background:'rgba(255,255,255,0.95)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,0,0,0.25)' }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--ink)"><path d="M8 5v14l11-7z"/></svg>
                     </div>
                   </div>
+                  {/* Medal badge */}
                   {medal && (
-                    <div style={{ position:'absolute', top:10, right:10, fontSize:26, filter:'drop-shadow(0 2px 4px rgba(0,0,0,0.35))' }}>{EMOJI[medal]}</div>
+                    <div style={{ position:'absolute', top:12, right:12, fontSize:28, filter:'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>
+                      {EMOJI[medal]}
+                    </div>
                   )}
+                  {/* "Regarder" label */}
+                  <div style={{ position:'absolute', bottom:10, left:12 }}>
+                    <span className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', background:'rgba(0,0,0,0.6)', color:'white', padding:'3px 8px', borderRadius:4 }}>
+                      Regarder
+                    </span>
+                  </div>
                 </div>
 
-                {/* Footer — clic pour voter */}
-                <div onClick={() => clickEntry(entry.id)} style={{ padding:'14px 16px', display:'flex', alignItems:'center', gap:12, cursor:'pointer' }}>
+                {/* Footer vote */}
+                <div onClick={() => clickEntry(entry.id)} style={{
+                  padding:'16px 18px', display:'flex', alignItems:'center', gap:14, cursor:'pointer',
+                  background: s ? s.bg : 'white', transition:'background 0.2s',
+                }}>
                   <div style={{ flex:1 }}>
-                    <div className="font-display" style={{ fontSize:17, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.01em' }}>
+                    <div className="font-display" style={{ fontSize:19, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.01em', lineHeight:1 }}>
                       Montage #{entry.display_number}
                     </div>
-                    <div style={{ fontSize:12, color:'#888', marginTop:2 }}>
-                      {medal ? `Sélectionné ${EMOJI[medal]}` : 'Cliquer pour sélectionner'}
+                    <div style={{ fontSize:12, color: medal ? s!.border : '#aaa', marginTop:4, fontWeight:500 }}>
+                      {medal ? `Sélectionné — ${EMOJI[medal]}` : '+ Ajouter à mon podium'}
                     </div>
                   </div>
                   <div style={{
-                    width:36, height:36, borderRadius:'50%', border:'2px solid var(--ink)', flexShrink:0,
+                    width:40, height:40, borderRadius:'50%', flexShrink:0,
+                    border: `2px solid ${medal ? s!.border : 'var(--ink)'}`,
+                    background: medal ? s!.border : 'transparent',
                     display:'flex', alignItems:'center', justifyContent:'center',
-                    background: medal ? 'var(--ink)' : 'transparent', transition:'all 0.15s',
+                    transition:'all 0.2s',
                   }}>
                     {medal
-                      ? <span style={{ fontSize:16 }}>{EMOJI[medal]}</span>
-                      : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                      ? <span style={{ fontSize:18 }}>{EMOJI[medal]}</span>
+                      : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
                     }
                   </div>
                 </div>
@@ -221,11 +244,25 @@ function VoteContent() {
         </div>
       </div>
 
-      {/* Submit bar full width */}
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'var(--cream)', borderTop:'var(--border)', padding:'16px 32px', zIndex:50 }}>
-        <div style={{ maxWidth:960, margin:'0 auto' }}>
-          <button className="btn-ink" disabled={filled < 3 || submitting} onClick={submit}>
-            {submitting ? 'Envoi en cours...' : 'Valider mon podium →'}
+      {/* ── Submit bar ── */}
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:100, background:'var(--cream)', borderTop:'var(--border)', padding:'16px 40px' }}>
+        <div style={{ maxWidth:1000, margin:'0 auto', display:'flex', alignItems:'center', gap:20 }}>
+          <div style={{ flex:1 }}>
+            {filled < 3
+              ? <p style={{ fontSize:13, color:'#aaa' }}>Sélectionne encore <strong style={{ color:'var(--ink)' }}>{3 - filled} vidéo{3 - filled > 1 ? 's' : ''}</strong> pour compléter ton podium</p>
+              : <p style={{ fontSize:13, color:'var(--turq)', fontWeight:700 }}>✓ Podium complet — prêt à voter !</p>
+            }
+          </div>
+          <button onClick={submit} disabled={filled < 3 || submitting}
+            style={{
+              padding:'14px 36px', fontFamily:'Barlow Condensed', fontSize:15, fontWeight:900,
+              letterSpacing:'0.08em', textTransform:'uppercase',
+              background: filled === 3 ? 'var(--ink)' : '#0d0d0d40',
+              color:'var(--cream)', border:'var(--border)', borderRadius:'var(--radius)',
+              cursor: filled === 3 ? 'pointer' : 'not-allowed', whiteSpace:'nowrap',
+              transition:'background 0.2s',
+            }}>
+            {submitting ? 'Envoi...' : 'Valider mon podium →'}
           </button>
         </div>
       </div>
@@ -236,28 +273,28 @@ function VoteContent() {
 function Confirmed({ picks, entries, onBack }: { picks: Record<Medal, string | null>; entries: Entry[]; onBack: () => void }) {
   return (
     <div style={{ minHeight:'100vh', background:'var(--cream)' }}>
-      <div style={{ display:'flex', alignItems:'center', padding:'16px 32px', borderBottom:'var(--border)' }}>
+      <div style={{ display:'flex', alignItems:'center', padding:'16px 40px', borderBottom:'var(--border)' }}>
         <span style={{ fontSize:14, fontWeight:500 }}>Kreads Edit</span>
       </div>
-      <div style={{ maxWidth:520, margin:'0 auto', padding:'60px 32px', textAlign:'center' }}>
-        <div style={{ width:80, height:80, borderRadius:'50%', background:'var(--turq)', border:'var(--border)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 24px', fontSize:32 }}>✓</div>
-        <div className="font-display" style={{ fontSize:40, fontWeight:900, textTransform:'uppercase', letterSpacing:'-0.01em', marginBottom:8 }}>Vote enregistré !</div>
-        <p style={{ fontSize:14, color:'#666', marginBottom:28 }}>Résultats dévoilés en cérémonie fin de mois</p>
-        <div className="k-card" style={{ textAlign:'left', padding:'18px 22px' }}>
-          <div className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#888', marginBottom:12 }}>Ton podium</div>
+      <div style={{ maxWidth:560, margin:'0 auto', padding:'64px 40px', textAlign:'center' }}>
+        <div style={{ width:88, height:88, borderRadius:'50%', background:'var(--turq)', border:'var(--border)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 28px', fontSize:36 }}>✓</div>
+        <div className="font-display" style={{ fontSize:48, fontWeight:900, textTransform:'uppercase', letterSpacing:'-0.02em', lineHeight:0.9, marginBottom:10 }}>Vote<br />enregistré !</div>
+        <p style={{ fontSize:14, color:'#888', marginBottom:32 }}>Résultats dévoilés en cérémonie fin de mois. Rendez-vous là-bas !</p>
+        <div style={{ background:'white', border:'var(--border)', borderRadius:14, padding:'20px 24px', textAlign:'left', marginBottom:20 }}>
+          <div className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#aaa', marginBottom:14 }}>Ton podium</div>
           {MEDALS.map(medal => {
             const entry = picks[medal] ? entries.find(e => e.id === picks[medal]) : null
             if (!entry) return null
             return (
-              <div key={medal} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'1px solid #0d0d0d10' }}>
-                <span style={{ fontSize:20 }}>{EMOJI[medal]}</span>
-                <span className="font-display" style={{ fontSize:16, fontWeight:900, textTransform:'uppercase', flex:1 }}>Montage #{entry.display_number}</span>
-                <span className="font-display" style={{ fontSize:12, fontWeight:700, color:'#888' }}>{PTS[medal]} pts</span>
+              <div key={medal} style={{ display:'flex', alignItems:'center', gap:14, padding:'10px 0', borderBottom:'1px solid #0d0d0d0e' }}>
+                <span style={{ fontSize:22 }}>{EMOJI[medal]}</span>
+                <span className="font-display" style={{ fontSize:17, fontWeight:900, textTransform:'uppercase', flex:1 }}>Montage #{entry.display_number}</span>
+                <span className="font-display" style={{ fontSize:12, fontWeight:700, color:'#aaa' }}>{PTS[medal]} pts</span>
               </div>
             )
           })}
         </div>
-        <button className="btn-ghost" style={{ marginTop:16 }} onClick={onBack}>Voir la dernière cérémonie</button>
+        <button className="btn-ghost" onClick={onBack}>Voir la dernière cérémonie</button>
       </div>
     </div>
   )
