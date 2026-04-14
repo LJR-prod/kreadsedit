@@ -134,6 +134,12 @@ export default function AdminPage() {
     await load()
   }
 
+  async function deleteVote(voteId: string, voterName: string) {
+    if (!confirm(`Autoriser ${voterName} à re-voter ?`)) return
+    await apiFetch('/api/admin/vote', { method: 'DELETE', body: JSON.stringify({ vote_id: voteId }) })
+    await load()
+  }
+
   async function revealSession() {
     if (!session || !confirm('Révéler les résultats et déclencher la cérémonie ?')) return
     setSaving(true)
@@ -315,7 +321,10 @@ export default function AdminPage() {
                               {String(i + 1).padStart(2, '0')}
                             </div>
                             <span style={{ fontSize:14, fontWeight:700 }}>{v.voter_name}</span>
-                            <span style={{ fontSize:11, color:'#888', marginLeft:'auto' }}>a voté</span>
+                            <button onClick={() => deleteVote(v.id, v.voter_name)}
+                              style={{ marginLeft:'auto', fontSize:11, fontFamily:'Barlow Condensed', fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'#c0392b', background:'none', border:'1px solid #c0392b30', borderRadius:6, padding:'4px 10px', cursor:'pointer' }}>
+                              Autoriser re-vote
+                            </button>
                           </div>
                           {/* Choix détaillés */}
                           <div style={{ display:'flex', flexDirection:'column', gap:6, paddingLeft:44 }}>

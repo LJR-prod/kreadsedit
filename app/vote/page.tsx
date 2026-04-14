@@ -65,18 +65,22 @@ function VoteContent() {
     const name = getVoter()
     if (!name || !sessionId) { router.push('/'); return }
     setVoterState(name)
-    if (hasVoted(sessionId)) setDone(true)
-    load()
+    load(name)
   }, [sessionId]) // eslint-disable-line
 
-  async function load() {
+  async function load(voterName?: string) {
     if (!sessionId) return
-    const [{ data: sess }, { data: ents }] = await Promise.all([
+    const name = voterName || getVoter()
+    const [{ data: sess }, { data: ents }, { data: existingVote }] = await Promise.all([
       supabase.from('sessions').select('*').eq('id', sessionId).single(),
       supabase.from('entries').select('*').eq('session_id', sessionId).order('display_number'),
+      // Check in DB if this person already voted (source of truth, ignores localStorage)
+      supabase.from('votes').select('id').eq('session_id', sessionId).eq('voter_name', name || '').maybeSingle(),
     ])
     if (!sess || sess.status !== 'open') { router.push('/'); return }
-    setSession(sess); setEntries(ents || []); setLoading(false)
+    setSession(sess); setEntries(ents || [])
+    if (existingVote) { markVoted(sessionId); setDone(true) }
+    setLoading(false)
   }
 
   function clickEntry(id: string) {
@@ -156,6 +160,19 @@ function VoteContent() {
               </div>
             )
           })}
+        </div>
+
+        {/* Warning monteurs */}
+        <div style={{ display:'flex', alignItems:'flex-start', gap:12, padding:'14px 18px', background:'#fff9e6', border:'2px solid #c9a000', borderRadius:12, marginBottom:20 }}>
+          <span style={{ fontSize:20, flexShrink:0 }}>⚠️</span>
+          <div>
+            <div className="font-display" style={{ fontSize:13, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.06em', color:'#c9a000', marginBottom:2 }}>
+              Règle d&apos;honneur
+            </div>
+            <p style={{ fontSize:13, color:'#555', lineHeight:1.5 }}>
+              Si tu reconnais ta propre vidéo, tu n&apos;as pas le droit de la mettre dans ton podium. Le vote est anonyme — respecte les règles du jeu.
+            </p>
+          </div>
         </div>
 
         {/* Section title */}
