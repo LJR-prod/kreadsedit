@@ -39,7 +39,7 @@ export default function Home() {
   return (
     <div style={{ minHeight:'100vh', background:'var(--cream)' }}>
 
-      {/* Topbar — full width */}
+      {/* Topbar */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 32px', borderBottom:'var(--border)' }}>
         <span style={{ fontSize:14, fontWeight:500 }}>Kreads Edit</span>
         {session && (
@@ -61,16 +61,22 @@ export default function Home() {
         </div>
       ) : (
         <>
-          {/* Hero — centré, aéré */}
+          {/* Hero */}
           <div style={{ padding:'64px 32px 48px', textAlign:'center', borderBottom:'var(--border)', position:'relative', overflow:'hidden' }}>
             {/* Watermark */}
             <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'none', overflow:'hidden' }}>
               <span className="font-display" style={{ fontSize:'22vw', fontWeight:900, textTransform:'uppercase', color:'#0d0d0d04', lineHeight:1, whiteSpace:'nowrap', userSelect:'none' }}>EDIT</span>
             </div>
 
-            {/* Badge live */}
-            <div style={{ display:'inline-flex', alignItems:'center', gap:6, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', background:'var(--turq)', color:'var(--ink)', padding:'5px 14px', borderRadius:4, marginBottom:24, position:'relative', zIndex:1 }}>
-              <span className="live-dot" /> Session en cours
+            {/* Badge live — nouvelle typo */}
+            <div style={{ display:'inline-flex', alignItems:'center', gap:8, marginBottom:28, position:'relative', zIndex:1 }}>
+              <span className="live-dot" style={{ background:'var(--turq)' }} />
+              <span style={{
+                fontFamily:'Barlow', fontSize:13, fontWeight:500, letterSpacing:'0.04em',
+                color:'var(--ink)', borderBottom:'1.5px solid var(--turq)', paddingBottom:1,
+              }}>
+                Session en cours
+              </span>
             </div>
 
             {/* Titre */}
@@ -81,12 +87,27 @@ export default function Home() {
 
             <div style={{ width:56, height:5, background:'var(--ink)', borderRadius:3, margin:'20px auto', position:'relative', zIndex:1 }} />
 
-            <p style={{ fontSize:15, color:'#666', position:'relative', zIndex:1, lineHeight:1.5 }}>
-              Vote anonyme · <strong style={{ color:'var(--ink)' }}>podium Or · Argent · Bronze</strong>
-            </p>
+            {/* Description enrichie */}
+            <div style={{ position:'relative', zIndex:1, maxWidth:480, margin:'0 auto' }}>
+              <p style={{ fontSize:15, color:'#555', lineHeight:1.7, marginBottom:16 }}>
+                Chaque mois, les monteurs de la team soumettent leur meilleur travail.<br />
+                <strong style={{ color:'var(--ink)' }}>Ton rôle :</strong> regarder anonymement et choisir ton podium.
+              </p>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:20, flexWrap:'wrap' }}>
+                {[['🥇', 'Or', '3 pts'], ['🥈', 'Argent', '2 pts'], ['🥉', 'Bronze', '1 pt']].map(([emoji, label, pts]) => (
+                  <div key={label} style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <span style={{ fontSize:18 }}>{emoji}</span>
+                    <div>
+                      <span className="font-display" style={{ fontSize:12, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.06em' }}>{label}</span>
+                      <span style={{ fontSize:11, color:'#888', marginLeft:4 }}>{pts}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Formulaire — centré */}
+          {/* Formulaire */}
           <div style={{ maxWidth:520, margin:'0 auto', padding:'40px 32px' }}>
             <label className="font-display" style={{ display:'block', fontSize:11, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#888', marginBottom:10 }}>
               Ton prénom + initiale du nom
