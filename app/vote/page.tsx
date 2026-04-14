@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import { getVoter, hasVoted, markVoted, ytThumb, ytId } from '@/lib/utils'
+import { getVoter, hasVoted, markVoted } from '@/lib/utils'
 import type { Entry, Session } from '@/lib/types'
 
 type Medal = 'gold' | 'silver' | 'bronze'
@@ -15,16 +15,17 @@ const SLOT_STYLE: Record<Medal, { border: string; bg: string; label: string }> =
   bronze: { border: '#a0622a', bg: '#fdf5ee', label: 'Bronze · 1 pt' },
 }
 
+// ── Video Modal with native HTML5 player ──────────────────
 function VideoModal({ entry, onClose }: { entry: Entry; onClose: () => void }) {
-  const id = ytId(entry.youtube_url)
   useEffect(() => {
     const h = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.body.style.overflow = 'hidden'
     window.addEventListener('keydown', h)
     return () => { document.body.style.overflow = ''; window.removeEventListener('keydown', h) }
   }, [onClose])
+
   return (
-    <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:200, background:'rgba(0,0,0,0.88)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}>
+    <div onClick={onClose} style={{ position:'fixed', inset:0, zIndex:200, background:'rgba(0,0,0,0.92)', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px' }}>
       <div onClick={e => e.stopPropagation()} style={{ width:'100%', maxWidth:960, background:'#111', borderRadius:16, overflow:'hidden', border:'2px solid #333' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 20px', borderBottom:'1px solid #333' }}>
           <span className="font-display" style={{ fontSize:15, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.06em', color:'white' }}>
@@ -32,15 +33,16 @@ function VideoModal({ entry, onClose }: { entry: Entry; onClose: () => void }) {
           </span>
           <button onClick={onClose} style={{ background:'none', border:'none', color:'#aaa', fontSize:22, cursor:'pointer', lineHeight:1, padding:'0 4px' }}>✕</button>
         </div>
-        <div style={{ position:'relative', paddingTop:'56.25%' }}>
-          {id
-            ? <iframe style={{ position:'absolute', inset:0, width:'100%', height:'100%', border:'none' }}
-                src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen />
-            : <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', color:'#666' }}>URL invalide</div>
-          }
-        </div>
+        {/* Native HTML5 video player */}
+        <video
+          controls
+          autoPlay
+          playsInline
+          style={{ width:'100%', display:'block', background:'#000', maxHeight:'70vh' }}
+        >
+          <source src={entry.youtube_url} type="video/mp4" />
+          Votre navigateur ne supporte pas la lecture vidéo.
+        </video>
       </div>
     </div>
   )
@@ -109,7 +111,7 @@ function VoteContent() {
     <div style={{ minHeight:'100vh', background:'var(--cream)', display:'flex', flexDirection:'column' }}>
       {watching && <VideoModal entry={watching} onClose={() => setWatching(null)} />}
 
-      {/* ── Topbar ── */}
+      {/* Topbar */}
       <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 40px', borderBottom:'var(--border)', flexShrink:0 }}>
         <span style={{ fontSize:14, fontWeight:500 }}>Kreads Edit</span>
         <div className="font-display" style={{ fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--ink)', color:'var(--cream)', padding:'5px 14px', borderRadius:4 }}>
@@ -117,10 +119,9 @@ function VoteContent() {
         </div>
       </div>
 
-      {/* ── Contenu centré ── */}
       <div style={{ flex:1, maxWidth:1000, width:'100%', margin:'0 auto', padding:'0 40px 120px', boxSizing:'border-box' }}>
 
-        {/* Progress bar */}
+        {/* Progress */}
         <div style={{ padding:'18px 0', borderBottom:'var(--border)', marginBottom:28 }}>
           <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
             <span className="font-display" style={{ fontSize:11, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#888' }}>Mon podium</span>
@@ -131,7 +132,7 @@ function VoteContent() {
           </div>
         </div>
 
-        {/* ── Podium slots ── */}
+        {/* Podium slots */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:36 }}>
           {MEDALS.map(medal => {
             const entryId = picks[medal]
@@ -141,23 +142,15 @@ function VoteContent() {
               <div key={medal} onClick={() => entry && setPicks(p => ({ ...p, [medal]: null }))}
                 style={{
                   border: entry ? `2px solid ${s.border}` : '2px dashed #0d0d0d28',
-                  background: entry ? s.bg : 'white',
-                  borderRadius:14, padding:'20px 16px', textAlign:'center',
+                  background: entry ? s.bg : 'white', borderRadius:14,
+                  padding:'20px 16px', textAlign:'center',
                   display:'flex', flexDirection:'column', alignItems:'center', gap:8,
-                  cursor: entry ? 'pointer' : 'default', transition:'all 0.2s',
-                  minHeight: 120,
+                  cursor: entry ? 'pointer' : 'default', transition:'all 0.2s', minHeight:120,
                 }}>
                 <span style={{ fontSize:32 }}>{EMOJI[medal]}</span>
-                <span className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color: entry ? s.border : '#aaa' }}>
-                  {s.label}
-                </span>
+                <span className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color: entry ? s.border : '#aaa' }}>{s.label}</span>
                 {entry
-                  ? <>
-                      <span className="font-display" style={{ fontSize:18, fontWeight:900, textTransform:'uppercase', color:'var(--ink)' }}>
-                        #{entry.display_number}
-                      </span>
-                      <span style={{ fontSize:11, color:'#999' }}>Cliquer pour retirer</span>
-                    </>
+                  ? <><span className="font-display" style={{ fontSize:18, fontWeight:900, textTransform:'uppercase' }}>#{entry.display_number}</span><span style={{ fontSize:11, color:'#999' }}>Cliquer pour retirer</span></>
                   : <span style={{ fontSize:12, color:'#bbb' }}>Sélectionner une vidéo</span>
                 }
               </div>
@@ -165,22 +158,17 @@ function VoteContent() {
           })}
         </div>
 
-        {/* ── Titre section vidéos ── */}
+        {/* Section title */}
         <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:20 }}>
-          <div className="font-display" style={{ fontSize:13, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase' }}>
-            Les montages du mois
-          </div>
-          <div style={{ flex:1, height:2, background:'var(--border)', borderRadius:1 }} />
-          <span className="font-display" style={{ fontSize:11, fontWeight:700, color:'#aaa', letterSpacing:'0.06em', textTransform:'uppercase' }}>
-            ▶ regarder · carte pour voter
-          </span>
+          <div className="font-display" style={{ fontSize:13, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase' }}>Les montages du mois</div>
+          <div style={{ flex:1, height:2, background:'#0d0d0d14', borderRadius:1 }} />
+          <span className="font-display" style={{ fontSize:11, fontWeight:700, color:'#aaa', letterSpacing:'0.06em', textTransform:'uppercase' }}>▶ regarder · carte pour voter</span>
         </div>
 
-        {/* ── Grille vidéos ── */}
+        {/* Videos grid */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:20 }}>
           {entries.map(entry => {
             const medal = MEDALS.find(m => picks[m] === entry.id) || null
-            const thumb = ytThumb(entry.youtube_url)
             const s = medal ? SLOT_STYLE[medal] : null
             return (
               <div key={entry.id} style={{
@@ -189,34 +177,32 @@ function VoteContent() {
                 boxShadow: s ? `0 0 0 4px ${s.border}22` : '0 2px 8px rgba(0,0,0,0.06)',
                 transition:'all 0.2s',
               }}>
-                {/* Thumbnail */}
-                <div onClick={() => setWatching(entry)} style={{ position:'relative', paddingTop:'56.25%', background:'#0d0d0d', cursor:'pointer' }}>
-                  {thumb && <img src={thumb} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:0.92 }} />}
-                  {/* Overlay play */}
-                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.22)', transition:'background 0.15s' }}>
+                {/* Video preview — click to watch */}
+                <div onClick={() => setWatching(entry)} style={{ position:'relative', paddingTop:'56.25%', background:'#0d0d0d', cursor:'pointer', overflow:'hidden' }}>
+                  {/* Native video thumbnail */}
+                  <video
+                    src={entry.youtube_url}
+                    style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }}
+                    preload="metadata"
+                    muted
+                    playsInline
+                  />
+                  {/* Play overlay */}
+                  <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(0,0,0,0.28)' }}>
                     <div style={{ width:56, height:56, borderRadius:'50%', background:'rgba(255,255,255,0.95)', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 4px 16px rgba(0,0,0,0.25)' }}>
                       <svg width="22" height="22" viewBox="0 0 24 24" fill="var(--ink)"><path d="M8 5v14l11-7z"/></svg>
                     </div>
                   </div>
-                  {/* Medal badge */}
                   {medal && (
-                    <div style={{ position:'absolute', top:12, right:12, fontSize:28, filter:'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>
-                      {EMOJI[medal]}
-                    </div>
+                    <div style={{ position:'absolute', top:12, right:12, fontSize:28, filter:'drop-shadow(0 2px 6px rgba(0,0,0,0.4))' }}>{EMOJI[medal]}</div>
                   )}
-                  {/* "Regarder" label */}
                   <div style={{ position:'absolute', bottom:10, left:12 }}>
-                    <span className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', background:'rgba(0,0,0,0.6)', color:'white', padding:'3px 8px', borderRadius:4 }}>
-                      Regarder
-                    </span>
+                    <span className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', background:'rgba(0,0,0,0.6)', color:'white', padding:'3px 8px', borderRadius:4 }}>Regarder</span>
                   </div>
                 </div>
 
                 {/* Footer vote */}
-                <div onClick={() => clickEntry(entry.id)} style={{
-                  padding:'16px 18px', display:'flex', alignItems:'center', gap:14, cursor:'pointer',
-                  background: s ? s.bg : 'white', transition:'background 0.2s',
-                }}>
+                <div onClick={() => clickEntry(entry.id)} style={{ padding:'16px 18px', display:'flex', alignItems:'center', gap:14, cursor:'pointer', background: s ? s.bg : 'white', transition:'background 0.2s' }}>
                   <div style={{ flex:1 }}>
                     <div className="font-display" style={{ fontSize:19, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.01em', lineHeight:1 }}>
                       Montage #{entry.display_number}
@@ -229,8 +215,7 @@ function VoteContent() {
                     width:40, height:40, borderRadius:'50%', flexShrink:0,
                     border: `2px solid ${medal ? s!.border : 'var(--ink)'}`,
                     background: medal ? s!.border : 'transparent',
-                    display:'flex', alignItems:'center', justifyContent:'center',
-                    transition:'all 0.2s',
+                    display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s',
                   }}>
                     {medal
                       ? <span style={{ fontSize:18 }}>{EMOJI[medal]}</span>
@@ -244,7 +229,7 @@ function VoteContent() {
         </div>
       </div>
 
-      {/* ── Submit bar ── */}
+      {/* Submit bar */}
       <div style={{ position:'fixed', bottom:0, left:0, right:0, zIndex:100, background:'var(--cream)', borderTop:'var(--border)', padding:'16px 40px' }}>
         <div style={{ maxWidth:1000, margin:'0 auto', display:'flex', alignItems:'center', gap:20 }}>
           <div style={{ flex:1 }}>
@@ -259,8 +244,7 @@ function VoteContent() {
               letterSpacing:'0.08em', textTransform:'uppercase',
               background: filled === 3 ? 'var(--ink)' : '#0d0d0d40',
               color:'var(--cream)', border:'var(--border)', borderRadius:'var(--radius)',
-              cursor: filled === 3 ? 'pointer' : 'not-allowed', whiteSpace:'nowrap',
-              transition:'background 0.2s',
+              cursor: filled === 3 ? 'pointer' : 'not-allowed', whiteSpace:'nowrap', transition:'background 0.2s',
             }}>
             {submitting ? 'Envoi...' : 'Valider mon podium →'}
           </button>
@@ -279,7 +263,7 @@ function Confirmed({ picks, entries, onBack }: { picks: Record<Medal, string | n
       <div style={{ maxWidth:560, margin:'0 auto', padding:'64px 40px', textAlign:'center' }}>
         <div style={{ width:88, height:88, borderRadius:'50%', background:'var(--turq)', border:'var(--border)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 28px', fontSize:36 }}>✓</div>
         <div className="font-display" style={{ fontSize:48, fontWeight:900, textTransform:'uppercase', letterSpacing:'-0.02em', lineHeight:0.9, marginBottom:10 }}>Vote<br />enregistré !</div>
-        <p style={{ fontSize:14, color:'#888', marginBottom:32 }}>Résultats dévoilés en cérémonie fin de mois. Rendez-vous là-bas !</p>
+        <p style={{ fontSize:14, color:'#888', marginBottom:32 }}>Résultats dévoilés en cérémonie fin de mois.</p>
         <div style={{ background:'white', border:'var(--border)', borderRadius:14, padding:'20px 24px', textAlign:'left', marginBottom:20 }}>
           <div className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.1em', textTransform:'uppercase', color:'#aaa', marginBottom:14 }}>Ton podium</div>
           {MEDALS.map(medal => {
