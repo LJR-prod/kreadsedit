@@ -79,7 +79,15 @@ function VoteContent() {
     ])
     if (!sess || sess.status !== 'open') { router.push('/'); return }
     setSession(sess); setEntries(ents || [])
-    if (existingVote) { markVoted(sessionId); setDone(true) }
+    if (existingVote) {
+      markVoted(sessionId)
+      setDone(true)
+    } else {
+      // Vote was deleted by admin — clear localStorage so user can vote again
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('kreb_voted_' + sessionId)
+      }
+    }
     setLoading(false)
   }
 
