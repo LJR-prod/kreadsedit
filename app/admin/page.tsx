@@ -308,12 +308,30 @@ export default function AdminPage() {
                       const s = entries.find(e => e.id === v.silver_entry_id)
                       const b = entries.find(e => e.id === v.bronze_entry_id)
                       return (
-                        <div key={v.id} style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 0', borderBottom:'1px solid #0d0d0d12' }}>
-                          <div style={{ width:32, height:32, borderRadius:'50%', background:'#eee', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:900, color:'#555', flexShrink:0 }}>
-                            {String(i + 1).padStart(2, '0')}
+                        <div key={v.id} style={{ padding:'14px 0', borderBottom:'1px solid #0d0d0d12' }}>
+                          {/* Votant */}
+                          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
+                            <div style={{ width:32, height:32, borderRadius:'50%', background:'#eee', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:900, color:'#555', flexShrink:0 }}>
+                              {String(i + 1).padStart(2, '0')}
+                            </div>
+                            <span style={{ fontSize:14, fontWeight:700 }}>{v.voter_name}</span>
+                            <span style={{ fontSize:11, color:'#888', marginLeft:'auto' }}>a voté</span>
                           </div>
-                          <span style={{ fontSize:13, fontWeight:700, flex:1 }}>{v.voter_name}</span>
-                          <span style={{ fontSize:12, color:'#888' }}>🥇#{g?.display_number ?? '?'} · 🥈#{s?.display_number ?? '?'} · 🥉#{b?.display_number ?? '?'}</span>
+                          {/* Choix détaillés */}
+                          <div style={{ display:'flex', flexDirection:'column', gap:6, paddingLeft:44 }}>
+                            {[
+                              { medal:'🥇', label:'Or', entry:g, color:'#c9a000' },
+                              { medal:'🥈', label:'Argent', entry:s, color:'#7a8fa0' },
+                              { medal:'🥉', label:'Bronze', entry:b, color:'#a0622a' },
+                            ].map(({ medal, label, entry: e, color }) => (
+                              <div key={label} style={{ display:'flex', alignItems:'center', gap:10 }}>
+                                <span style={{ fontSize:16, flexShrink:0 }}>{medal}</span>
+                                <span className="font-display" style={{ fontSize:10, fontWeight:900, letterSpacing:'0.08em', textTransform:'uppercase', color, minWidth:48 }}>{label}</span>
+                                <span style={{ fontSize:13, fontWeight:700, color:'var(--ink)' }}>{e?.editor_name ?? '?'}</span>
+                                <span style={{ fontSize:11, color:'#aaa', marginLeft:4 }}>#{e?.display_number ?? '?'}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )
                     })
