@@ -63,44 +63,34 @@ export default function Home() {
         <>
           {/* Hero */}
           <div style={{ padding:'64px 32px 48px', textAlign:'center', borderBottom:'var(--border)', position:'relative', overflow:'hidden' }}>
-            {/* Watermark */}
-            <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', pointerEvents:'none', overflow:'hidden' }}>
-              <span className="font-display" style={{ fontSize:'22vw', fontWeight:900, textTransform:'uppercase', color:'#0d0d0d04', lineHeight:1, whiteSpace:'nowrap', userSelect:'none' }}>EDIT</span>
-            </div>
 
-            {/* Badge live — nouvelle typo */}
+            {/* Badge live — même typo que le titre */}
             <div style={{ display:'inline-flex', alignItems:'center', gap:8, marginBottom:28, position:'relative', zIndex:1 }}>
-              <span className="live-dot" style={{ background:'var(--turq)' }} />
-              <span style={{
-                fontFamily:'Barlow', fontSize:13, fontWeight:500, letterSpacing:'0.04em',
-                color:'var(--ink)', borderBottom:'1.5px solid var(--turq)', paddingBottom:1,
-              }}>
+              <span className="live-dot" />
+              <span className="font-display" style={{ fontSize:16, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--ink)' }}>
                 Session en cours
               </span>
             </div>
 
             {/* Titre */}
-            <div className="font-display" style={{ fontSize:'clamp(42px, 7vw, 88px)', fontWeight:900, textTransform:'uppercase', letterSpacing:'-0.02em', lineHeight:0.9, marginBottom:8, position:'relative', zIndex:1 }}>
+            <div className="font-display" style={{ fontSize:'clamp(52px, 8vw, 100px)', fontWeight:900, textTransform:'uppercase', letterSpacing:'-0.02em', lineHeight:0.88, marginBottom:8, position:'relative', zIndex:1 }}>
               Qui a réalisé<br />le meilleur<br />
               <span style={{ color:'var(--turq)' }}>montage ?</span>
             </div>
 
-            <div style={{ width:56, height:5, background:'var(--ink)', borderRadius:3, margin:'20px auto', position:'relative', zIndex:1 }} />
+            <div style={{ width:56, height:5, background:'var(--ink)', borderRadius:3, margin:'24px auto', position:'relative', zIndex:1 }} />
 
-            {/* Description enrichie */}
-            <div style={{ position:'relative', zIndex:1, maxWidth:480, margin:'0 auto' }}>
-              <p style={{ fontSize:15, color:'#555', lineHeight:1.7, marginBottom:16 }}>
-                Chaque mois, les monteurs de la team soumettent leur meilleur travail.<br />
+            {/* Description simplifiée */}
+            <div style={{ position:'relative', zIndex:1 }}>
+              <p style={{ fontSize:15, color:'#555', lineHeight:1.6 }}>
                 <strong style={{ color:'var(--ink)' }}>Ton rôle :</strong> regarder anonymement et choisir ton podium.
               </p>
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:20, flexWrap:'wrap' }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:20, marginTop:14, flexWrap:'wrap' }}>
                 {[['🥇', 'Or', '3 pts'], ['🥈', 'Argent', '2 pts'], ['🥉', 'Bronze', '1 pt']].map(([emoji, label, pts]) => (
                   <div key={label} style={{ display:'flex', alignItems:'center', gap:6 }}>
                     <span style={{ fontSize:18 }}>{emoji}</span>
-                    <div>
-                      <span className="font-display" style={{ fontSize:12, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.06em' }}>{label}</span>
-                      <span style={{ fontSize:11, color:'#888', marginLeft:4 }}>{pts}</span>
-                    </div>
+                    <span className="font-display" style={{ fontSize:12, fontWeight:900, textTransform:'uppercase', letterSpacing:'0.06em' }}>{label}</span>
+                    <span style={{ fontSize:11, color:'#888' }}>{pts}</span>
                   </div>
                 ))}
               </div>
