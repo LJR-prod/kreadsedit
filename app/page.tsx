@@ -25,7 +25,6 @@ export default function Home() {
     const initial = ln.trim().replace('.', '').toUpperCase()
     if (firstName.length < 2 || initial.length < 1) return
     const name = `${firstName} ${initial}.`
-    if (hasVoted(session.id)) { setErr('Tu as déjà voté pour ce mois !'); return }
     setVoter(name)
     router.push(`/vote?s=${session.id}`)
   }
